@@ -8,7 +8,7 @@ exist in the AWS account from The Baltimore Banner team.
 This repository contains two important folders:
 
 - middleware
-- terraforming
+- terraform
 
 ## Folders
 
