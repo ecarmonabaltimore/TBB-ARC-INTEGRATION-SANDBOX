@@ -523,7 +523,7 @@ jobs:
         type: string
     machine:
       image: ubuntu-2204:2022.07.1
-    resource_class: xlarge
+    resource_class: medium
     working_directory: ~/repo
     steps:
       - checkout
