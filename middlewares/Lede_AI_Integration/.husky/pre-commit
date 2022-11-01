@@ -1,0 +1,5 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+cd middlewares/Lede_AI_Integration/
+npm run pre-commit

@@ -1,0 +1,59 @@
+{
+  "parser": "@typescript-eslint/parser",
+  "extends": ["prettier"],
+  "plugins": ["prettier", "simple-import-sort"],
+  "overrides": [
+    {
+      "files": "src/**/*.js",
+      "rules": {
+        "simple-import-sort/imports": "off",
+        "import/order": ["error", { "newlines-between": "always" }]
+      }
+    }
+  ],
+  "rules": {
+    "prettier/prettier": ["error"],
+    "quotes": ["error", "single"],
+    "eslint-disable-next-line": "off",
+    "no-unused-vars": [2, { "args": "none" }],
+    "no-var": "error",
+    "camelcase": ["error", {"allow": ["^[a-z]([a-z])*_"]}],
+    "array-callback-return": "error",
+    "default-case": "error",
+    "eqeqeq": "error",
+    "max-lines": ["error", { "max": 300 }],
+    "no-await-in-loop": "error",
+    "no-console": ["error", { "allow": ["info", "warn", "error"] }],
+    "no-duplicate-imports": "error",
+    "no-empty-function": "warn",
+    "no-eq-null": "error",
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-var-requires": "off",
+    "no-inner-declarations": "off",
+    "class-methods-use-this": "off",
+    "comma-dangle": "off",
+    "function-paren-newline": "off",
+    "global-require": "off",
+    "import/no-dynamic-require": "off",
+    "import/extensions": "off",
+    "import/prefer-default-export": "off",
+    "sort-imports": "off",
+    "import/order": "off",
+    "simple-import-sort/imports": "error",
+    "simple-import-sort/exports": "error"
+  },
+  "env": {
+    "node": true,
+    "jest": true,
+    "es6": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 8,
+    "sourceType": "module"
+  },
+  "globals": {
+    "shallow": true
+  }
+}

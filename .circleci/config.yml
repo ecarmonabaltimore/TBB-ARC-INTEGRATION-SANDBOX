@@ -1,0 +1,632 @@
+version: 2.1
+
+setup: true
+
+orbs:
+  slack: circleci/slack@4.6.0
+
+parameters:
+  arc-ssh-fingerprint:
+    description: "SSH fingerprint with write permission to arc repository"
+    default: "19:2a:7d:f3:df:14:bf:18:ff:f1:e7:b2:88:b6:98:9a"
+    type: string
+  arc-github-repo-url:
+    description: "ARC repository URL on Github"
+    default: "git@github.com:The-Baltimore-Banner/Arc-Integration-API.git"
+    type: string
+  run-weekly-sync-repo:
+    description: "Conditional to run only workflow sync"
+    type: boolean
+    default: false
+
+commands:
+  git-clone-wize-repo:
+    steps:
+      - run: | 
+          mkdir ~/clean_repo
+          cd ~/clean_repo
+          git clone --bare git@github.com:wizeline/Baltimore-Banner-Middlewares.git
+
+  git-push-mirror:
+    parameters:
+      FINGERPRINT:
+        description: "SSH KEY fingerprint with read/write permissions"
+        type: string
+      GITHUB_REPO_URL:
+        description: "Github repository url to push to"
+        type: string
+    steps:
+      - add_ssh_keys:
+          fingerprints:
+            - << parameters.FINGERPRINT >>
+      - run: |
+          git push --mirror << parameters.GITHUB_REPO_URL >>
+
+  middleware-changed-test:
+    parameters:
+      COMMIT_HASH:
+        description: "Unique git commit identifier"
+        type: string
+    steps:
+      - run: |
+          WORKING_DIRECTORY="$(echo ${PWD})"
+          LAMBDAS_ROOT_FOLDER="middlewares"
+          LAMBDAS_FOLDERS_PATH=$(ls -d ./$LAMBDAS_ROOT_FOLDER/*/)
+          FILES_CHANGED="$(git diff-tree --no-commit-id --name-only -r <<parameters.COMMIT_HASH>>)"
+          for LAMBDA_FOLDER in $LAMBDAS_FOLDERS_PATH
+          do
+            if echo "${FILES_CHANGED}" | grep -q "${LAMBDA_FOLDER:2}"; then
+              echo "Move to Middleware Folder: ${LAMBDA_FOLDER:2}" && cd "${LAMBDA_FOLDER}"
+              echo "Install dependencies" && npm install --no-save
+              echo "Run the Test (Eslint, Prettier, Test & Build)" && npm run test:ci
+            fi
+            cd "${WORKING_DIRECTORY}"
+          done
+
+  slack-notification-fail:
+    steps:
+      - slack/notify:
+          event: fail
+          custom: |
+              {
+                "blocks": [
+                	{
+                		"type": "header",
+                		"text": {
+                			"type": "plain_text",
+                			"text": ":middleware: Middlewares Project: Something went wrong :circle-ci-fail:",
+                			"emoji": true
+                		}
+                	},
+                	{
+                		"type": "divider"
+                	},
+                	{
+                		"type": "context",
+                		"elements": [
+                			{
+                				"type": "mrkdwn",
+                				"text": ":circleci-bot: *CircleCI Bot* has detected some problems in the workflow [$CIRCLE_JOB] that have prevented it from advancing in the execution."
+                			}
+                		]
+                	},
+                  {
+                    "type": "section",
+                    "fields": [
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Repository*: $CIRCLE_PROJECT_REPONAME"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Branch*: $CIRCLE_BRANCH"
+                      },
+                      {
+                        "type": "mrkdwn",
+                      	"text": "*Commit*: $CIRCLE_SHA1"
+                      },
+                      {
+                      	"type": "mrkdwn",
+                      	"text": "*Author*: $CIRCLE_USERNAME"
+                      }
+                      ],
+                    "accessory": {
+                      "type": "image",
+                      "image_url": "https://raw.githubusercontent.com/GiomarWize/icon-circleci/main/middleware.png",
+                      "alt_text": "Middleware logo"
+                    }
+                  },
+                	{
+                		"type": "divider"
+                	},
+                	{
+                		"type": "section",
+                		"text": {
+                			"type": "mrkdwn",
+                			"text": "You can review the workflow by clicking the button."
+                		},
+                		"accessory": {
+                			"type": "button",
+                			"text": {
+                				"type": "plain_text",
+                				"text": "View Workflow",
+                				"emoji": true
+                			},
+                			"value": "View Workflow",
+                			"url": "${CIRCLE_BUILD_URL}",
+                			"action_id": "button-action"
+                		}
+                	},
+                	{
+                		"type": "divider"
+                	}
+                ]
+              }
+
+  slack-notification-hold:
+    steps:
+      - slack/notify:
+          custom: |
+            {
+            	"blocks": [
+            	  {
+            			"type": "header",
+            			"text": {
+            				"type": "plain_text",
+            				"text": ":middleware: Middlewares Project: workflow is waiting for approval :circle-ci:",
+            				"emoji": true
+            			}
+            		},
+            		{
+            			"type": "divider"
+            		},
+            		{
+            			"type": "context",
+            			"elements": [
+            				{
+            					"type": "mrkdwn",
+            					"text": ":circleci-bot: *CircleCI Bot* has paused the execution of the workflow, since it requires the approval of one of the administrators."
+            				}
+            			]
+            		},
+                  {
+                    "type": "section",
+                    "fields": [
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Repository*: $CIRCLE_PROJECT_REPONAME"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Branch*: $CIRCLE_BRANCH"
+                      },
+                      {
+                        "type": "mrkdwn",
+                      	"text": "*Commit*: $CIRCLE_SHA1"
+                      },
+                      {
+                      	"type": "mrkdwn",
+                      	"text": "*Author*: $CIRCLE_USERNAME"
+                      }
+                      ],
+                    "accessory": {
+                      "type": "image",
+                      "image_url": "https://raw.githubusercontent.com/GiomarWize/icon-circleci/main/middleware.png",
+                      "alt_text": "Middleware logo"
+                    }
+                  },
+            		{
+            			"type": "divider"
+            		},
+            		{
+            			"type": "section",
+            			"text": {
+            				"type": "mrkdwn",
+            				"text": "You can review the workflow by clicking the button."
+            			},
+            			"accessory": {
+            				"type": "button",
+            				"text": {
+            					"type": "plain_text",
+            					"text": "View Workflow",
+            					"emoji": true
+            				},
+            				"value": "View Workflow",
+            				"url": "https://app.circleci.com/pipelines/workflows/$CIRCLE_WORKFLOW_ID",
+            				"action_id": "button-action"
+            			}
+            		},
+            		{
+            			"type": "divider"
+            		}
+            	]
+            }
+
+  slack-notification-pass:
+    steps:
+      - slack/notify:
+          event: pass
+          custom: |
+            {
+              "blocks": [
+              	{
+              		"type": "header",
+              		"text": {
+              			"type": "plain_text",
+              			"text": ":middleware: Middlewares Project: workflow succeeded! :circle-ci-pass:",
+              			"emoji": true
+              		}
+              	},
+              	{
+              		"type": "divider"
+              	},
+              	{
+              		"type": "context",
+              		"elements": [
+              			{
+              				"type": "mrkdwn",
+              				"text": ":circleci-bot: *CircleCI Bot* has successfully completed the execution of the workflow."
+              			}
+              		]
+              	},
+                  {
+                    "type": "section",
+                    "fields": [
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Repository*: $CIRCLE_PROJECT_REPONAME"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Branch*: $CIRCLE_BRANCH"
+                      },
+                      {
+                        "type": "mrkdwn",
+                      	"text": "*Commit*: $CIRCLE_SHA1"
+                      },
+                      {
+                      	"type": "mrkdwn",
+                      	"text": "*Author*: $CIRCLE_USERNAME"
+                      }
+                      ],
+                    "accessory": {
+                      "type": "image",
+                      "image_url": "https://raw.githubusercontent.com/GiomarWize/icon-circleci/main/middleware.png",
+                      "alt_text": "Middleware logo"
+                    }
+                  },
+              	{
+              		"type": "divider"
+              	},
+              	{
+              		"type": "section",
+              		"text": {
+              			"type": "mrkdwn",
+              			"text": "You can review the workflow by clicking the button."
+              		},
+              		"accessory": {
+              			"type": "button",
+              			"text": {
+              				"type": "plain_text",
+              				"text": "View Workflow",
+              				"emoji": true
+              			},
+              			"value": "View Workflow",
+              			"url": "${CIRCLE_BUILD_URL}",
+              			"action_id": "button-action"
+              		}
+              	},
+              	{
+              		"type": "divider"
+              	}
+              ]
+            }
+
+  slack-notification-deploy-fail:
+    parameters:
+      ENVIROMENT:
+        description: "Environment"
+        type: string
+        default: "DEV"
+    steps:
+      - slack/notify:
+          event: fail
+          custom: |
+            {
+            	"blocks": [
+            		{
+            			"type": "header",
+            			"text": {
+            				"type": "plain_text",
+            				"text": ":middleware: Middlewares Project: Something went wrong during deployment in <<parameters.ENVIROMENT>>! :fire:",
+            				"emoji": true
+            			}
+            		},
+            		{
+            			"type": "divider"
+            		},
+            		{
+            			"type": "context",
+            			"elements": [
+            				{
+            					"type": "mrkdwn",
+            					"text": ":circleci-bot: *CircleCI Bot* has detected some problems in the workflow [$CIRCLE_JOB] that have prevented it from advancing in the execution."
+            				}
+            			]
+            		},
+                  {
+                    "type": "section",
+                    "fields": [
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Repository*: $CIRCLE_PROJECT_REPONAME"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Branch*: $CIRCLE_BRANCH"
+                      },
+                      {
+                        "type": "mrkdwn",
+                      	"text": "*Commit*: $CIRCLE_SHA1"
+                      },
+                      {
+                      	"type": "mrkdwn",
+                      	"text": "*When*: $(date +'%m/%d/%Y %T')"
+                      }
+                      ],
+                    "accessory": {
+                      "type": "image",
+                      "image_url": "https://raw.githubusercontent.com/GiomarWize/icon-circleci/main/middleware.png",
+                      "alt_text": "Middleware logo"
+                    }
+                  },
+            		{
+            			"type": "divider"
+            		},
+            		{
+            			"type": "section",
+            			"text": {
+            				"type": "mrkdwn",
+            				"text": "You can review the workflow by clicking the button."
+            			},
+            			"accessory": {
+            				"type": "button",
+            				"text": {
+            					"type": "plain_text",
+            					"text": "View Workflow",
+            					"emoji": true
+            				},
+            				"value": "View Workflow",
+            				"url": "${CIRCLE_BUILD_URL}",
+            				"action_id": "button-action"
+            			}
+            		},
+            		{
+            			"type": "divider"
+            		}
+            	]
+            }
+
+  slack-notification-deploy-pass:
+    parameters:
+      ENVIROMENT:
+        description: "Environment"
+        type: string
+        default: "DEV"
+    steps:
+      - slack/notify:
+          event: pass
+          custom: |
+            {
+            	"blocks": [
+            		{
+            			"type": "header",
+            			"text": {
+            				"type": "plain_text",
+            				"text": ":middleware: Middlewares Project: Successful Deployment in <<parameters.ENVIROMENT>>! :rocket:",
+            				"emoji": true
+            			}
+            		},
+            		{
+            			"type": "divider"
+            		},
+            		{
+            			"type": "context",
+            			"elements": [
+            				{
+            					"type": "mrkdwn",
+            					"text": ":circleci-bot: *CircleCI Bot* has successfully completed the execution of the workflow."
+            				}
+            			]
+            		},
+                  {
+                    "type": "section",
+                    "fields": [
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Repository*: $CIRCLE_PROJECT_REPONAME"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Branch*: $CIRCLE_BRANCH"
+                      },
+                      {
+                        "type": "mrkdwn",
+                      	"text": "*Commit*: $CIRCLE_SHA1"
+                      },
+                      {
+                      	"type": "mrkdwn",
+                      	"text": "*When*: $(date +'%m/%d/%Y %T')"
+                      }
+                      ],
+                    "accessory": {
+                      "type": "image",
+                      "image_url": "https://raw.githubusercontent.com/GiomarWize/icon-circleci/main/middleware.png",
+                      "alt_text": "Middleware logo"
+                    }
+                  },
+            		{
+            			"type": "divider"
+            		},
+            		{
+            			"type": "section",
+            			"text": {
+            				"type": "mrkdwn",
+            				"text": "You can review the workflow by clicking the button."
+            			},
+            			"accessory": {
+            				"type": "button",
+            				"text": {
+            					"type": "plain_text",
+            					"text": "View Workflow",
+            					"emoji": true
+            				},
+            				"value": "View Workflow",
+            				"url": "${CIRCLE_BUILD_URL}",
+            				"action_id": "button-action"
+            			}
+            		},
+            		{
+            			"type": "divider"
+            		}
+            	]
+            }
+
+  terraform-apply:
+    parameters:
+      TARGET:
+        description: "Environment to be deployed"
+        type: string
+        default: development
+    steps:
+      - run: |
+          cd "./terraform" && terraform apply -auto-approve -target="module.globals" -target="module.<<parameters.TARGET>>"
+
+  terraform-format:
+    steps:
+      - run: cd "./terraform" && terraform fmt -recursive -diff -check
+
+  terraform-init:
+    steps:
+      - run: cd "./terraform" && terraform init
+  
+  terraform-plan:
+    steps:
+      - run: cd "./terraform" && terraform plan -no-color
+
+  terraform-show:
+    steps:
+      - run: cd "./terraform" && terraform show -no-color -json "output-plan"
+
+  terraform-validate:
+    steps:
+      - run: cd "./terraform" && terraform validate
+  
+  ubuntu-dependencies-install:
+    parameters:
+      TERRAFORM_VERSION:
+        description: "Terraform version to be installed"
+        type: string
+        default: "1.3.0"
+    steps:
+      - run: |
+          wget -O terraform.zip https://releases.hashicorp.com/terraform/<<parameters.TERRAFORM_VERSION>>/terraform_<<parameters.TERRAFORM_VERSION>>_linux_amd64.zip && \
+            sudo unzip terraform.zip -d /usr/local/bin && \
+            rm -f terraform.zip
+          curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+          sudo apt install -y bash curl jq git nodejs
+
+jobs:
+  middlewares-terraform-test:
+    parameters:
+      BRANCH:
+        type: string
+    machine:
+      image: ubuntu-2204:2022.07.1
+    resource_class: xlarge
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - ubuntu-dependencies-install
+      - middleware-changed-test:
+          COMMIT_HASH: "${CIRCLE_SHA1:0:7}"
+      - terraform-init
+      - terraform-format
+      - terraform-validate
+      - terraform-plan
+      - slack-notification-fail
+      - slack-notification-pass
+      - when:
+          condition:
+            or:
+              - equal: [ main, << parameters.BRANCH >> ]
+              - equal: [ dev, << parameters.BRANCH >> ]
+          steps:
+            - slack-notification-hold
+
+  sync-arc:
+    docker:
+      - image: cimg/node:14.19.0-browsers
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - git-clone-wize-repo
+      - git-push-mirror:
+          FINGERPRINT: << pipeline.parameters.arc-ssh-fingerprint >>
+          GITHUB_REPO_URL: << pipeline.parameters.arc-github-repo-url >>
+      - slack-notification-fail
+      - slack-notification-pass
+
+  terraform-deploy-dev:
+    machine:
+      image: ubuntu-2204:2022.07.1
+    resource_class: xlarge
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - ubuntu-dependencies-install
+      - terraform-init
+      - terraform-apply:
+          TARGET: "development"
+      - slack-notification-deploy-fail
+      - slack-notification-deploy-pass
+
+  terraform-deploy-prod:
+    machine:
+      image: ubuntu-2204:2022.07.1
+    resource_class: xlarge
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - ubuntu-dependencies-install
+      - terraform-init
+      - terraform-apply:
+          TARGET: "production"
+      - slack-notification-deploy-fail:
+          ENVIROMENT: "PROD"
+      - slack-notification-deploy-pass:
+          ENVIROMENT: "PROD"
+
+workflows:
+  sync-repo:
+    when:
+      equal: [ true, << pipeline.parameters.run-weekly-sync-repo >> ]
+    jobs:
+      - sync-arc:
+          context:
+            - ArcXP
+  build-test-and-deploy:
+    when:
+      equal: [ false, << pipeline.parameters.run-weekly-sync-repo >> ]
+    jobs:
+      - middlewares-terraform-test:
+          BRANCH: << pipeline.git.branch >>
+          context:
+            - ArcXP
+      - hold:
+          type: approval
+          requires:
+            - middlewares-terraform-test
+          filters:
+            branches:
+              only:
+                - dev
+                - main
+      - terraform-deploy-dev:
+          context:
+            - ArcXP
+          requires:
+            - hold
+          filters:
+            branches:
+              only:
+                - dev
+      - terraform-deploy-prod:
+          context:
+            - ArcXP
+          requires:
+            - hold
+          filters:
+            branches:
+              only:
+                - main

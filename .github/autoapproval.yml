@@ -1,0 +1,24 @@
+from_owner:
+  - GiomarWize
+
+required_labels:
+  - auto-approval
+
+blacklisted_labels:
+  - bug detected 🐛
+  - changes requested 🛠
+  - conflicts 🔫
+  - Do not Merge :no_good_man:  :stop_sign:
+  - Do not review it (yet) :warning: :no_good:
+  - documentation required 📜
+  - duplicate 🌚  🌝
+  - have dependencies 💍
+  - invalid ❌
+  - needs rebase 🎸
+  - PR Checklist :ballot_box_with_check: 👁
+  - question 🤨 ❓
+  - Suggestions Added 🚦
+  
+
+apply_labels:
+  - auto-approved
