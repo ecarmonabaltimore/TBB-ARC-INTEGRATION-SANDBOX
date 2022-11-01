@@ -1,6 +1,6 @@
 # Baltimore-Banner-Middlewares
 
-The intention of this repository is to contain all the middleware and the code 
+The intention of this repository is to host all the middleware and the code 
 of the AWS infrastructure in a single place, that way you can study faster what
 are the current integrations for The Baltimore Banner webpage and the resources that 
 exist in the AWS account from The Baltimore Banner team.
