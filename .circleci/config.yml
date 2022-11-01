@@ -588,13 +588,7 @@ jobs:
           ENVIROMENT: "PROD"
 
 workflows:
-  sync-repo:
-    when:
-      equal: [ true, << pipeline.parameters.run-weekly-sync-repo >> ]
-    jobs:
-      - sync-arc:
-          context:
-            - ArcXP
+  
   build-test-and-deploy:
     when:
       equal: [ false, << pipeline.parameters.run-weekly-sync-repo >> ]
@@ -602,7 +596,7 @@ workflows:
       - middlewares-terraform-test:
           BRANCH: << pipeline.git.branch >>
           context:
-            - ArcXP
+            - AWS_Sandbox
       - hold:
           type: approval
           requires:
@@ -614,7 +608,7 @@ workflows:
                 - main
       - terraform-deploy-dev:
           context:
-            - ArcXP
+            - AWS_Sandbox
           requires:
             - hold
           filters:
@@ -623,7 +617,7 @@ workflows:
                 - dev
       - terraform-deploy-prod:
           context:
-            - ArcXP
+            - AWS_Sandbox
           requires:
             - hold
           filters:
