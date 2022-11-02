@@ -1,6 +1,6 @@
 terraform {
   backend "s3" {
-    bucket = "tbb-middleware-tfstate-bucket"
+    bucket = "tbb-middleware-tfstate-bucket-sandbox"
     key    = "terraform.tfstate"
     region = "us-east-1"
 
@@ -21,7 +21,7 @@ module "globals" {
 module "development" {
   source               = "./development"
   aws_account_id       = local.aws_account_id
-  environment          = local.environment_dev
+  environment          = local.environment_sandbox
   functions            = var.functions
   aws_region           = local.aws_region
   s3_deployment_bucket = module.globals.deployment_bucket_name

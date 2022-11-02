@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "deployment_bucket" {
-  bucket = "tbb-middleware-deployment-bucket"
+  bucket = "tbb-middleware-deployment-bucket-sandbox"
   tags   = { "bucket_deployment" : "TBB_INT" }
 }
 

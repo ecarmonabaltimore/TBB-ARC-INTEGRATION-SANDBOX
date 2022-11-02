@@ -11,7 +11,7 @@ variable "aws_region" {
 variable "environment" {
   description = "environment"
   type        = string
-  default     = "dev"
+  default     = "sandbox"
 }
 
 variable "functions" {

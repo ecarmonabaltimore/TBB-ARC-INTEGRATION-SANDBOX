@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "s3_tfstate" {
-  bucket        = "${var.tfstate_name}-bucket"
+  bucket        = "${var.tfstate_name}-bucket-sandbox"
   force_destroy = true
 
   tags = { "bucket_tfstate" : "TBB_INT" }
