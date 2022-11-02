@@ -1,4 +1,4 @@
-# Baltimore-Banner-Middlewares
+# Baltimore-Banner-Middleware
 
 The intention of this repository is to contain all the middleware and the code 
 of the AWS infrastructure in a single place, that way you can study faster what
