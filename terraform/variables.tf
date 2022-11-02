@@ -6,8 +6,8 @@ locals {
 }
 
 locals {
-  environment_dev  = "dev"
-  environment_prod = "prod"
+  environment_dev     = "dev"
+  environment_prod    = "prod"
   environment_sandbox = "sandbox"
 }
 
