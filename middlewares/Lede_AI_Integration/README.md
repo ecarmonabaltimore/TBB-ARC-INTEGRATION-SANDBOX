@@ -1,5 +1,7 @@
 # LedeAI RSS feed integration
 
+## This integration was discarded, however it was tested in the development environment working as expected. 
+
 ## Overview
 
 This middleware was created to fit the LedeAI RSS feed integration requirements.

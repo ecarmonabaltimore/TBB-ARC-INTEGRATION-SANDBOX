@@ -1,4 +1,4 @@
-# Baltimore-Banner-Middleware
+# Baltimore-Banner-Middlewares
 
 The intention of this repository is to contain all the middleware and the code 
 of the AWS infrastructure in a single place, that way you can study faster what
@@ -8,7 +8,7 @@ exist in the AWS account from The Baltimore Banner team.
 This repository contains two important folders:
 
 - middleware
-- terraform
+- terraforming
 
 ## Folders
 
@@ -43,4 +43,3 @@ documentation for the different APIs that ARCxp has.
 
 If you are unable to view the ARCxp documentation immediately contact your PM 
 requesting access.
-# TBB-ARC-INTEGRATION-SANDBOX

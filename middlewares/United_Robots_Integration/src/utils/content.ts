@@ -10,7 +10,86 @@ import {
   SITE_URL,
 } from '../constants';
 import { circulateDraf, createDraf, createImage, createTasks } from './request';
-import { ansContentElements, UnitedRobotsItems } from './types';
+import {
+  ansContentElements,
+  getDataContentElementsResponse,
+  UnitedRobotsItems,
+} from './types';
+
+/**
+ * getDataContentElements function
+ * Function which, based on a UnitedRobotsItems type object,
+ * is capable of extracting the thumbnail and the body of the object.
+ *
+ * @param {UnitedRobotsItems} item - Element type UnitedRobotsItems
+ * @returns returns an object with two parameters root and thumbnail.
+ *
+ * @example
+ * # Usage
+ * ```ts
+ * const { root, thumbnail } = await getDataContentElements(item);
+ * ```
+ *
+ */
+export const getDataContentElements = async (
+  item: UnitedRobotsItems,
+): Promise<getDataContentElementsResponse> => {
+  let thumbnail = null;
+  const contentElements = item['content:encoded'];
+  const root = parse(contentElements.trim());
+  const startWithPTag = root.childNodes[0]
+    ? root.childNodes[0].toString().startsWith('<p>')
+    : false;
+  const startWithImgTag =
+    startWithPTag && root.childNodes[0]
+      ? root.childNodes[0].childNodes[0].toString().startsWith('<img')
+      : false;
+  const startWithFigureTag = root.childNodes[0]
+    ? root.childNodes[0].toString().startsWith('<figure>')
+    : false;
+
+  if ((startWithPTag && startWithImgTag) || startWithFigureTag) {
+    const childPosition = root.childNodes[0].toString().startsWith('<p>')
+      ? 0
+      : 1;
+    const childImageTag = root.childNodes[0].childNodes[
+      childPosition
+    ] as HTMLElement;
+    const childImageAlt = childImageTag.getAttribute('alt')!;
+    const childImageCaption = root.childNodes[0].toString().startsWith('<p>')
+      ? ''
+      : root.childNodes[0].childNodes[3].rawText;
+    const childImageURL = `http${
+      childImageTag.getAttribute('src')?.split('http')[1]
+    }`;
+
+    if (
+      item['media:thumbnail'] &&
+      item['media:thumbnail']['$'].url === childImageURL
+    ) {
+      thumbnail = await createImage(
+        childImageAlt,
+        childImageCaption,
+        childImageURL,
+      );
+      root.childNodes.shift();
+    } else if (
+      item['media:thumbnail'] &&
+      item['media:thumbnail']['$'].url !== childImageURL
+    ) {
+      thumbnail = await createImage(
+        `${item.title}`,
+        '',
+        item['media:thumbnail']['$'].url,
+      );
+    }
+  }
+
+  return {
+    root: root,
+    thumbnail: thumbnail,
+  };
+};
 
 /**
  * getUUID function
@@ -147,12 +226,12 @@ export const createStory = async (item: UnitedRobotsItems) => {
  * ```
  */
 export const parseContentElements = async (
-  contentElements: string,
+  item: UnitedRobotsItems,
 ): Promise<ansContentElements> => {
   const parseContentElements: Array<any> = [];
-  const root = parse(contentElements);
+  const { root, thumbnail } = await getDataContentElements(item);
   root.childNodes.forEach(async child => {
-    const element = child as HTMLElement;
+    const element = child as unknown as HTMLElement;
     const startWithPTag = element.toString().startsWith('<p>');
     const startWithUlTag = element.toString().startsWith('<ul>');
     const startWithOlTag = element.toString().startsWith('<ol>');
@@ -197,7 +276,10 @@ export const parseContentElements = async (
       }
     }
   });
-  return await Promise.all(parseContentElements);
+  return {
+    contentElements: await Promise.all(parseContentElements),
+    contentThumbnail: thumbnail,
+  };
 };
 
 /**
@@ -290,7 +372,9 @@ export const parseContentElements = async (
  * ```
  */
 export const createANS = async (item: UnitedRobotsItems) => {
-  const contentElements = await parseContentElements(item['content:encoded']);
+  const { contentElements, contentThumbnail } = await parseContentElements(
+    item,
+  );
   const ans = {
     _id: item.guid,
     additional_properties: {
@@ -382,24 +466,11 @@ export const createANS = async (item: UnitedRobotsItems) => {
       status_code: 14,
     },
   };
-  return 'media:thumbnail' in item
+  return contentThumbnail
     ? {
         ...ans,
         promo_items: {
-          basic: await createImage(
-            `${item.title}`,
-            '',
-            item['media:thumbnail']['$']['url'],
-          ),
-          second: {
-            type: 'reference',
-            referent: {
-              type: 'image',
-              id: '1',
-              service: '',
-              provider: '',
-            },
-          },
+          basic: contentThumbnail,
         },
       }
     : ans;
