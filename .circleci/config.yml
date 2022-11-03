@@ -467,7 +467,7 @@ jobs:
         type: string
     machine:
       image: ubuntu-2204:2022.07.1
-    resource_class: xlarge
+    resource_class: large
     working_directory: ~/repo
     steps:
       - checkout
@@ -489,7 +489,7 @@ jobs:
   terraform-deploy-dev:
     machine:
       image: ubuntu-2204:2022.07.1
-    resource_class: xlarge
+    resource_class: large
     working_directory: ~/repo
     steps:
       - checkout
@@ -503,7 +503,7 @@ jobs:
   terraform-deploy-prod:
     machine:
       image: ubuntu-2204:2022.07.1
-    resource_class: xlarge
+    resource_class: large
     working_directory: ~/repo
     steps:
       - checkout
