@@ -517,6 +517,7 @@ jobs:
           ENVIROMENT: "PROD"
 
 workflows:
+  build-test-and-deploy:
     jobs:
       - middlewares-terraform-test:
           BRANCH: << pipeline.git.branch >>
