@@ -1,5 +1,3 @@
-import { HTMLElement } from 'node-html-parser';
-
 /**
  * Aux Type from United Robot RSS  Single Sales feed
  */
@@ -13,7 +11,7 @@ type location = {
 /**
  * Aux Type from United Robot RSS  Single Sales feed
  */
-export type thumbnail = {
+type thumbnail = {
   $: { url: string };
 };
 
@@ -186,12 +184,4 @@ export type createImageResponse = {
 /**
  * Type ContentElements
  */
-export type ansContentElements = {
-  contentElements: Array<ansContentElement | createImageResponse>;
-  contentThumbnail: createImageResponse | null;
-};
-
-export type getDataContentElementsResponse = {
-  root: HTMLElement;
-  thumbnail: createImageResponse | null;
-};
+export type ansContentElements = Array<ansContentElement | createImageResponse>;

@@ -2,6 +2,14 @@
 
 You will find in this folder the code of all the middlewares infrastructure developed for The Baltimore Banner.
 
+## Warning
+
+It must be taken into account that the isolated folders approach is used to differentiate 
+the deployed resources between environments, having said that it is imperative 
+that resources are first provisioned in the development environment (development folder)
+after this design/architecture meets the requirements, it is processed to establish the 
+same architecture for the production environment (production folder).
+
 ## Quick Start
 
 ### Pre-requisite installed packages:
@@ -23,7 +31,6 @@ export AWS_SECRET_ACCESS_KEY=xxxx
 
 ```sh
 terraform init
-terraform workspace select default
 terraform plan
 ```
 
@@ -53,23 +60,28 @@ No inputs.
 No output.
 
 ## Folders
-### api_gateway
+### development
+Here is described the infrastructure that will undergo constant changes due to
+development, take this environment to refine and adjust the infrastructure to 
+meet the requested requirements.
 
-Describe all configuration relate with AWS api gateway. If a lambda 
-requires an endpoint where to receive information, configurations must 
-be added inside this folder.
+### globals
+Here are described only those resources that will be used globally, this means 
+that they will be used equally by the development environment and the production 
+environment.
 
-### lambda
+Take into consideration that to date they are only described in this folder:
 
-Describe all terraform configuration relate with AWS lambda. If a lambda 
-is created, its configuration must be found inside this folder.
+- An S3 bucket where all the bundles of the different middleware that are developed will be stored.
+- An S3 bucket to store the `terraform.tfstate` (remote backend).
+- A DynamoDB table to block parallel executions of terraform (remote backend).
 
-### s3
+### production
 
-Describe all terraform configuration relate with AWS S3 bucket, mainly the 
-S3 bucket where the bundles of the different integrations are uploaded.
-If a new integration is added it is necessary to create a configuration 
-under this folder.
+This folder describes the infrastructure of middlewares in production, take into
+account that any change you want to make in this folder must first be tested 
+in the development environment (development folder), after fulfilling the 
+requirements, proceed to add the changes in this folder.
 
 ### Scripts
 
@@ -95,24 +107,3 @@ as downloads the bundle so that it is available for the Terraform environment.
 This script only exposes the following variable to terraform:
 
 - `fileName` - the name of the default that the middleware zip bundle should have.
-
-## Workspaces
-
-It must be taken into account that the workspace approach is used to isolate
-the deployed resources between environments.
-
-### default
-
-This environment is described all the resources of the development environment, 
-all those resources of the development environment point to an ARCxp Sanbdox 
-environment.
-
-### prod
-
-This environment is describing all the resources of the production environment, 
-all those resources of the development environment point to an ARCxp Production
-environment.
-
-Take into consideration that the Development environment is a mirror of the 
-Production environment, so any changes that you want to make in Production must 
-first work correctly in the Development environment.
