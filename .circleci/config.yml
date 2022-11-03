@@ -5,63 +5,7 @@ setup: true
 orbs:
   slack: circleci/slack@4.6.0
 
-parameters:
-  arc-ssh-fingerprint:
-    description: "SSH fingerprint with write permission to arc repository"
-    default: "19:2a:7d:f3:df:14:bf:18:ff:f1:e7:b2:88:b6:98:9a"
-    type: string
-  arc-github-repo-url:
-    description: "ARC repository URL on Github"
-    default: "git@github.com:The-Baltimore-Banner/Arc-Integration-API.git"
-    type: string
-  run-weekly-sync-repo:
-    description: "Conditional to run only workflow sync"
-    type: boolean
-    default: false
-
 commands:
-  git-clone-wize-repo:
-    steps:
-      - run: | 
-          mkdir ~/clean_repo
-          cd ~/clean_repo
-          git clone --bare git@github.com:wizeline/Baltimore-Banner-Middlewares.git
-
-  git-push-mirror:
-    parameters:
-      FINGERPRINT:
-        description: "SSH KEY fingerprint with read/write permissions"
-        type: string
-      GITHUB_REPO_URL:
-        description: "Github repository url to push to"
-        type: string
-    steps:
-      - add_ssh_keys:
-          fingerprints:
-            - << parameters.FINGERPRINT >>
-      - run: |
-          git push --mirror << parameters.GITHUB_REPO_URL >>
-
-  middleware-changed-test:
-    parameters:
-      COMMIT_HASH:
-        description: "Unique git commit identifier"
-        type: string
-    steps:
-      - run: |
-          WORKING_DIRECTORY="$(echo ${PWD})"
-          LAMBDAS_ROOT_FOLDER="middlewares"
-          LAMBDAS_FOLDERS_PATH=$(ls -d ./$LAMBDAS_ROOT_FOLDER/*/)
-          FILES_CHANGED="$(git diff-tree --no-commit-id --name-only -r <<parameters.COMMIT_HASH>>)"
-          for LAMBDA_FOLDER in $LAMBDAS_FOLDERS_PATH
-          do
-            if echo "${FILES_CHANGED}" | grep -q "${LAMBDA_FOLDER:2}"; then
-              echo "Move to Middleware Folder: ${LAMBDA_FOLDER:2}" && cd "${LAMBDA_FOLDER}"
-              echo "Install dependencies" && npm install --no-save
-              echo "Run the Test (Eslint, Prettier, Test & Build)" && npm run test:ci
-            fi
-            cd "${WORKING_DIRECTORY}"
-          done
 
   slack-notification-fail:
     steps:
@@ -553,19 +497,6 @@ jobs:
               - equal: [ dev, << parameters.BRANCH >> ]
           steps:
             - slack-notification-hold
-
-  sync-arc:
-    docker:
-      - image: cimg/node:14.19.0-browsers
-    working_directory: ~/repo
-    steps:
-      - checkout
-      - git-clone-wize-repo
-      - git-push-mirror:
-          FINGERPRINT: << pipeline.parameters.arc-ssh-fingerprint >>
-          GITHUB_REPO_URL: << pipeline.parameters.arc-github-repo-url >>
-      - slack-notification-fail
-      - slack-notification-pass
 
   terraform-deploy-dev:
     machine:
