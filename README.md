@@ -12,7 +12,7 @@ This repository contains two important folders:
 
 ## Folders
 
-### middlewareS
+### middleware
 
 In this folder, you must create a folder for each integration that must be 
 carried out, each folder will represent a bundle and from said bundle you can
