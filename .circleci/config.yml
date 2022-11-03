@@ -481,8 +481,6 @@ jobs:
     steps:
       - checkout
       - ubuntu-dependencies-install
-      - middleware-changed-test:
-          COMMIT_HASH: "${CIRCLE_SHA1:0:7}"
       - terraform-init
       
       - terraform-format
