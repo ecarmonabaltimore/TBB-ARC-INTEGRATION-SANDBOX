@@ -4,8 +4,8 @@ terraform {
     key    = "terraform.tfstate"
     region = "us-east-1"
 
-    dynamodb_table = "tbb-middleware-tfstate-table"
-    encrypt        = true
+    #dynamodb_table = "tbb-middleware-tfstate-table"
+    #encrypt        = true
   }
 }
 
