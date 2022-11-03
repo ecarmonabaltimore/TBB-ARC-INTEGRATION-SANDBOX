@@ -1,6 +1,6 @@
 terraform {
   backend "s3" {
-    bucket = "tbb-middleware-tfstate-bucket"
+    bucket = "tbb-middleware-tfstate-bucket-sandbox"
     key    = "terraform.tfstate"
     region = "us-east-1"
 
