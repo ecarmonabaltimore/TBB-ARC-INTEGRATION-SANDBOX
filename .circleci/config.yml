@@ -614,8 +614,7 @@ jobs:
 workflows:
   
   build-test-and-deploy:
-    when:
-      equal: [ false, << pipeline.parameters.run-weekly-sync-repo >> ]
+    
     jobs:
       - middlewares-terraform-test:
           BRANCH: << pipeline.git.branch >>
