@@ -25,7 +25,7 @@ if echo "${FILES_CHANGED}" | grep -q "${MIDDLEWARE_GIT_ROOT_PATH}"; then
   FILENAME=${CURRENT_BUNDLE_FILENAME}
 else
   FILENAME="$(echo "${PREVIOUS_BUNDLE_FILENAME}" | sed  "s/\-${ENVIRONMENT}\.zip//g")"
-  aws s3 cp s3://"${BUCKET_NAME}"/"${BUCKET_PREFIX}"/"${ENVIRONMENT}"/"${PREVIOUS_BUNDLE_FILENAME}" ./bundle.zip > /dev/null 2>&1
+  aws s3 cp s3://"${BUCKET_NAME}"/"${BUCKET_PREFIX}"/"${ENVIRONMENT}"/"${PREVIOUS_BUNDLE_FILENAME}" ./bundle.zip > /sandbox/null 2>&1
 fi
 
 cd "$CURRENT_DIRECTORY"
