@@ -13,7 +13,7 @@ locals {
 variable "deployment_bucket_name" {
   description = "name of the S3 bucket for upload bundles"
   type        = string
-  default     = "tbb-middleware-deployment-bucket"
+  default     = "tbb-middleware-deployment-bucket-sandbox"
 }
 
 variable "functions" {

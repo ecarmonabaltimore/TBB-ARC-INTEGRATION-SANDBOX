@@ -22,7 +22,7 @@ MIDDLEWARE_GIT_ROOT_PATH="$(basename "$MIDDLEWARE_PARENT_ROOT_ABSOLUTE_PATH")/$(
 if git diff-tree --no-commit-id --name-only -r "${COMMIT_HASH}" | grep -q "${MIDDLEWARE_GIT_ROOT_PATH}"; then
   FILENAME=${BUNDLE_FILENAME}
 else
-  PREVIOUS_BUNDLE_FILENAME=$(aws s3 ls tbb-middleware-deployment-bucket --recursive | grep "${BUCKET_PREFIX}/${ENVIRONMENT}/" | sort | tail -n 1 | awk '{print $4}' | rev | cut -d/ -f1 | rev)
+  PREVIOUS_BUNDLE_FILENAME=$(aws s3 ls tbb-middleware-deployment-bucket-sandbox --recursive | grep "${BUCKET_PREFIX}/${ENVIRONMENT}/" | sort | tail -n 1 | awk '{print $4}' | rev | cut -d/ -f1 | rev)
   FILENAME=${PREVIOUS_BUNDLE_FILENAME//\-${ENVIRONMENT}\.zip/}
 fi
 
