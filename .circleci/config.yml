@@ -540,19 +540,7 @@ jobs:
       - middleware-changed-test:
           COMMIT_HASH: "${CIRCLE_SHA1:0:7}"
       - terraform-init
-      - when:
-          condition:
-            not:
-              equal: [ main, << parameters.BRANCH >> ]
-          steps:
-            - terraform-workspace:
-                TARGET: "default"
-      - when:
-          condition:
-            equal: [ main, << parameters.BRANCH >> ]
-          steps:
-            - terraform-workspace:
-                TARGET: "prod"
+      
       - terraform-format
       - terraform-validate
       - terraform-plan
