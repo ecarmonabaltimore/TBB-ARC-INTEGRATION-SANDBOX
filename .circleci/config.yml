@@ -424,7 +424,7 @@ commands:
         default: development
     steps:
       - run: |
-          cd "./terraform" && terraform apply -auto-approve
+          cd "./terraform" && terraform apply -auto-approve -target="module.globals" -target="module.<<parameters.TARGET>>"
 
   terraform-format:
     steps:
@@ -436,7 +436,7 @@ commands:
   
   terraform-plan:
     steps:
-      - run: cd "./terraform" && terraform plan
+      - run: cd "./terraform" && terraform plan -no-color
 
   terraform-show:
     steps:
@@ -445,15 +445,6 @@ commands:
   terraform-validate:
     steps:
       - run: cd "./terraform" && terraform validate
-
-  terraform-workspace:
-    parameters:
-      TARGET:
-        description: "Terraform workspace to switch"
-        type: string
-        default: "default"
-    steps:
-      - run: cd "./terraform" && terraform workspace select <<parameters.TARGET>>
   
   ubuntu-dependencies-install:
     parameters:
@@ -476,13 +467,12 @@ jobs:
         type: string
     machine:
       image: ubuntu-2204:2022.07.1
-    resource_class: large
+    resource_class: xlarge
     working_directory: ~/repo
     steps:
       - checkout
       - ubuntu-dependencies-install
       - terraform-init
-      
       - terraform-format
       - terraform-validate
       - terraform-plan
@@ -499,44 +489,49 @@ jobs:
   terraform-deploy-dev:
     machine:
       image: ubuntu-2204:2022.07.1
-    resource_class: large
+    resource_class: xlarge
     working_directory: ~/repo
     steps:
       - checkout
       - ubuntu-dependencies-install
       - terraform-init
-      - terraform-workspace:
-          TARGET: "default"
-      - terraform-apply
+      - terraform-apply:
+          TARGET: "development"
       - slack-notification-deploy-fail
       - slack-notification-deploy-pass
 
   terraform-deploy-prod:
     machine:
       image: ubuntu-2204:2022.07.1
-    resource_class: large
+    resource_class: xlarge
     working_directory: ~/repo
     steps:
       - checkout
       - ubuntu-dependencies-install
       - terraform-init
-      - terraform-workspace:
-          TARGET: "prod"
-      - terraform-apply
+      - terraform-apply:
+          TARGET: "production"
       - slack-notification-deploy-fail:
           ENVIROMENT: "PROD"
       - slack-notification-deploy-pass:
           ENVIROMENT: "PROD"
 
 workflows:
-  
+  sync-repo:
+    when:
+      equal: [ true, << pipeline.parameters.run-weekly-sync-repo >> ]
+    jobs:
+      - sync-arc:
+          context:
+            - ArcXP
   build-test-and-deploy:
-    
+    when:
+      equal: [ false, << pipeline.parameters.run-weekly-sync-repo >> ]
     jobs:
       - middlewares-terraform-test:
           BRANCH: << pipeline.git.branch >>
           context:
-            - AWS_Sandbox
+            - ArcXP
       - hold:
           type: approval
           requires:
@@ -548,7 +543,7 @@ workflows:
                 - main
       - terraform-deploy-dev:
           context:
-            - AWS_Sandbox
+            - ArcXP
           requires:
             - hold
           filters:
@@ -557,7 +552,7 @@ workflows:
                 - dev
       - terraform-deploy-prod:
           context:
-            - AWS_Sandbox
+            - ArcXP
           requires:
             - hold
           filters:

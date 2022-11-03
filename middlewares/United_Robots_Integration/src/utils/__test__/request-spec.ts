@@ -99,6 +99,15 @@ describe('Create Draft', () => {
             content_code: 'green',
           },
         },
+        second: {
+          type: 'reference',
+          referent: {
+            type: 'image',
+            id: '1',
+            service: '',
+            provider: '',
+          },
+        },
       },
       version: '0.10.7',
       taxonomy: {

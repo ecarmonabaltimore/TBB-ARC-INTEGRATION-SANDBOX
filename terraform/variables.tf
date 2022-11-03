@@ -10,24 +10,34 @@ locals {
   environment_prod = "prod"
 }
 
-variable "deployment_bucket_name" {
-  description = "name of the S3 bucket for upload bundles"
+variable "tfstate_name" {
+  description = "name of the DynamoDB table for Terraform AWS Backend."
   type        = string
-  default     = "tbb-middleware-deployment-bucket"
+  default     = "tbb-middleware-tfstate"
 }
 
 variable "functions" {
   type        = map(any)
   description = "Map of ecr names."
   default = {
-    integration_mailchimp_api = {
-      lambda_name  = "integration-mailchimp"
-      ssm_prefix   = "/tbb/integration/mailchimp-api"
-      root_path    = "./../middlewares/MailChimp_API_Integration"
-      s3_prefix    = "mailchimp-api/integration"
-      handler_path = "src/handlers/mailchimp-dispatcher.dispatcherHandler"
+    wire_ledeai = {
+      lambda_name  = "wire-ledeai"
+      ssm_prefix   = "/tbb/wire/ledeai"
+      root_path    = "./../middlewares/Lede_AI_Integration"
+      s3_prefix    = "ledeai/wire"
+      handler_path = "dist/index.getUUID"
       tags = {
-        "integration-mailchimp" : "TBB_INT"
+        "wire-ledeai" : "TBB_INT"
+      }
+    },
+    wire_ledeai_rss_feed = {
+      lambda_name  = "wire-ledeai-rss-feed"
+      ssm_prefix   = "/tbb/wire/ledeai"
+      root_path    = "./../middlewares/Lede_AI_Integration"
+      s3_prefix    = "ledeai/wire"
+      handler_path = "dist/index.handleRSSFeed"
+      tags = {
+        "wire-ledeai-rss-feed" : "TBB_INT"
       }
     },
     wire_united_robots = {
