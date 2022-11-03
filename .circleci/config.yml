@@ -432,7 +432,7 @@ commands:
 
   terraform-init:
     steps:
-      - run: cd "./terraform" && terraform init -backend-config="access_key=$aws_access_key_id" -backend-config="secret_key=$aws_secret_access_key" -backend-config="session_token=$aws_session_token"
+      - run: cd "./terraform" && terraform init
   
   terraform-plan:
     steps:
